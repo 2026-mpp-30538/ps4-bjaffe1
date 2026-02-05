@@ -99,9 +99,16 @@ for i in range(len(cat_column)):
 updated_cats = filter(None, updated_cats)
 updated_cats = list(updated_cats)
 
+link_column = []
+for action in title_html:
+  link = action.find('a').get('href')
+  link_column.append(link)
+len(link_column)
+
 scraped_df = pd.DataFrame({'title': title_column, 
                            'date': date_column,
-                           'enforcement_category': updated_cats})
+                           'enforcement_category': updated_cats,
+                           'link': link_column})
 
 print(scraped_df.head())
 ```
