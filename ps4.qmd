@@ -103,7 +103,6 @@ link_column = []
 for action in title_html:
   link = action.find('a').get('href')
   link_column.append(link)
-len(link_column)
 
 scraped_df = pd.DataFrame({'title': title_column, 
                            'date': date_column,
@@ -118,18 +117,96 @@ print(scraped_df.head())
 ### 1. Turning the scraper into a function 
 
 * a. Pseudo-Code
+Step 1: Check if the year is >= 2013
 
+  Step 1a: If yes, proceed to step 2
+
+  Step 1b: If no, remind the user to input a date that is in 2013 or later
+
+Step 2: Inspect page html
+
+Step 3: Check if any enforcement actions on the page have a date preceding the month and year requested
+
+  Step 3a: If yes, collect all enforcement actions above that one
+
+  Step 3b: If no, collect all enforcement actions on the page and precede to step 4
+
+Step 4: Parse html and extract the url to go to the next page
+
+Step 5: Follow that link
+
+Step 6: Repeat steps 3-5 until the month+year prior to the one requested is reached
+
+Step 7: Compile the collected information into a dataframe
 
 * b. Create Dynamic Scraper
 
 ```{python}
+#| eval: true
+#| echo: false
 
+def get_enforcement(monthplusyear):
+  datetime = pd.to_datetime(monthplusyear)
+  if datetime.year < 2013:
+    print('Cannot fetch enforcement actions prior to 2013. Please input a new date, making sure that it is January 2013 or later.')
+  else:
+    url = 'https://oig.hhs.gov/fraud/enforcement/'
+    title_column = []
+    date_column = []
+    category_column = []
+    link_column = []
+
+    for i in range(535):
+      time.sleep(1)
+      response = requests.get(url)
+      soup = BeautifulSoup(response.content, 'lxml')
+    
+      for item in soup.find_all('div', class_ = 'usa-card__container'):
+        date = item.find('span', class_ = 'text-base-dark padding-right-105')
+        t = pd.to_datetime(date.text)
+        if t < datetime:
+          #updated_cats = []
+          '''for n in range(len(category_column)):
+            if category_column[n] == 'COVID-19':
+              new_cat = 'COVID-19, Criminal and Civil Actions'
+            elif category_column[n-1] == 'COVID-19':
+              new_cat = None
+            else:
+              new_cat = category_column[n]
+            updated_cats.append(new_cat)
+          updated_cats = filter(None, updated_cats)
+          updated_cats = list(updated_cats)'''
+          df_final = pd.DataFrame({'title': list(title_column), 
+                                 'date': list(date_column),
+                                 'enforcement_category': category_column,
+                                 'link': list(link_column)})
+          df_final.to_csv(f'enforcement_actions_{datetime.year}_{datetime.month}.csv')
+          return None
+        else:
+          title_column.append(item.find('h2', class_ = 'usa-card__heading').text[1:-1])
+          date_column.append(date.text)
+          category_column.append(item.find('li', class_ = 'display-inline-block usa-tag text-no-lowercase text-base-darkest bg-base-lightest margin-right-1').text)
+          link_column.append(item.find('a').get('href'))
+      url = 'https://oig.hhs.gov/fraud/enforcement/?page='+str(i)
 ```
+
+```{python}
+#| eval: false
+get_enforcement('January 2024')
+```
+
+```{python}
+jan_2024 = pd.read_csv('/Users/brookjaffe/Desktop/MPP/DAPII/ps4-bjaffe1/enforcement_actions_2024_1.csv')
+print(jan_2024.shape)
+print(jan_2024.tail())
+```
+
+There are 1,811 enforcement actions in the final dataframe, with the earliest being the indictment of a former nurse aide from January 3, 2024 in the State Enforcement Agencies category.
 
 * c. Test Your Code
 
 ```{python}
-
+get_enforcement('January 2022')
 ```
 
 ## Step 3: Plot data based on scraped data
@@ -145,7 +222,17 @@ print(scraped_df.head())
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
+df_enforcement = pd.read_csv('/Users/brookjaffe/Desktop/MPP/DAPII/ps4-bjaffe1/enforcement_actions_2022_1.csv')
+df_enforcement['date'] = pd.to_datetime(df_enforcement['date'])
 
+enforcement_over_time = alt.Chart(df_enforcement).mark_area(
+  color='lightblue',
+  interpolate='step-after',
+  line=True
+).encode(
+  x = alt.X().title('Time')
+  y = alt.X
+)
 ```
 
 * based on five topics
