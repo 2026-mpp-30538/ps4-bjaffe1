@@ -206,6 +206,7 @@ There are 1,811 enforcement actions in the final dataframe, with the earliest be
 * c. Test Your Code
 
 ```{python}
+#| eval: false
 get_enforcement('January 2022')
 ```
 
@@ -214,7 +215,25 @@ get_enforcement('January 2022')
 ### 1. Plot the number of enforcement actions over time
 
 ```{python}
+df_enforcement = pd.read_csv('/Users/brookjaffe/Desktop/MPP/DAPII/ps4-bjaffe1/enforcement_actions_2022_1.csv')
+df_enforcement['date'] = pd.to_datetime(df_enforcement['date'])
 
+df_enforcement['yearmonth'] = df_enforcement['date'].dt.to_period('M').astype(str)
+
+df_enforcement['yearmonth'] = pd.to_datetime(df_enforcement['yearmonth'])
+
+df_enforcement_over_time = df_enforcement.groupby('yearmonth').count().reset_index()
+
+enforcement_over_time = alt.Chart(df_enforcement_over_time, title = 'Enforcement Actions Over Time').mark_area(
+  color='lightblue',
+  interpolate='step-after',
+  line=True
+).encode(
+  x = alt.X('yearmonth:T').title('Time'),
+  y = alt.Y('title').title('Number of Actions')
+)
+
+enforcement_over_time.show()
 ```
 
 ### 2. Plot the number of enforcement actions categorized:
@@ -222,17 +241,7 @@ get_enforcement('January 2022')
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
-df_enforcement = pd.read_csv('/Users/brookjaffe/Desktop/MPP/DAPII/ps4-bjaffe1/enforcement_actions_2022_1.csv')
-df_enforcement['date'] = pd.to_datetime(df_enforcement['date'])
 
-enforcement_over_time = alt.Chart(df_enforcement).mark_area(
-  color='lightblue',
-  interpolate='step-after',
-  line=True
-).encode(
-  x = alt.X().title('Time')
-  y = alt.X
-)
 ```
 
 * based on five topics
