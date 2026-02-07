@@ -224,7 +224,7 @@ df_enforcement['yearmonth'] = pd.to_datetime(df_enforcement['yearmonth'])
 
 df_enforcement_over_time = df_enforcement.groupby('yearmonth').count().reset_index()
 
-enforcement_over_time = alt.Chart(df_enforcement_over_time, title = 'Enforcement Actions Over Time').mark_area(
+enforcement_over_time = alt.Chart(df_enforcement_over_time, title = 'Enforcement Actions Over Time, January 2022-Present').mark_area(
   color='lightblue',
   interpolate='step-after',
   line=True
@@ -241,11 +241,70 @@ enforcement_over_time.show()
 * based on "Criminal and Civil Actions" vs. "State Enforcement Agencies"
 
 ```{python}
+df_enforcement['classification'] = None
+for i in df_enforcement.index:
+  if df_enforcement.loc[i, 'enforcement_category'] == 'Criminal and Civil Actions':
+    df_enforcement.loc[i, 'classification'] = 'Criminal and Civil Actions'
+  elif df_enforcement.loc[i, 'enforcement_category'] == 'State Enforcement Agencies':
+    df_enforcement.loc[i, 'classification'] = 'State Enforcement Agencies'
 
+df_enforcement_two_categories = df_enforcement.groupby(by = ['yearmonth', 'classification']).count().reset_index()
+
+crim_vs_state = alt.Chart(df_enforcement_two_categories).mark_line().encode(
+  x = alt.X('yearmonth:T').title('Time'),
+  y = alt.Y('title:Q').title('Number of actions'),
+  color = alt.Color('classification:N').title('Action type')
+).properties(
+  title={
+    'text': 'Enforcement Actions Over Time, January 2022-Present'
+  }
+)
+
+crim_vs_state.show()
 ```
 
 * based on five topics
 
 ```{python}
+df_enforcement['topic'] = 'Other'
 
+for i in df_enforcement.index:
+  if (('Health' in df_enforcement.loc[i, 'title']) | 
+  ('Medicaid' in df_enforcement.loc[i, 'title']) | 
+  ('Medicare' in df_enforcement.loc[i, 'title']) |
+  ('Doctor' in df_enforcement.loc[i, 'title']) | 
+  ('Medical' in df_enforcement.loc[i, 'title']) | 
+  ('Unlicensed' in df_enforcement.loc[i, 'title']) | 
+  ('Psychotherapy' in df_enforcement.loc[i, 'title']) | 
+  ('Civil Monetary Penalties Law' in df_enforcement.loc[i, 'title']) | 
+  ('Hosptial' in df_enforcement.loc[i, 'title']) | 
+  ('Caregiver' in df_enforcement.loc[i, 'title']) | 
+  ('False Claims Act' in df_enforcement.loc[i, 'title'])):
+    df_enforcement.loc[i, 'topic'] = 'Health Care Fraud'
+  elif (('Bank' in df_enforcement.loc[i, 'title']) | 
+  ('Financial' in df_enforcement.loc[i, 'title'])):
+    df_enforcement.loc[i, 'topic'] = 'Financial Fraud'
+  elif (('Drug' in df_enforcement.loc[i, 'title']) | 
+  ('Substance' in df_enforcement.loc[i, 'title']) | 
+  ('Pharmaceutical' in df_enforcement.loc[i, 'title']) | 
+  ('Opioid' in df_enforcement.loc[i, 'title'])):
+    df_enforcement.loc[i, 'topic'] = 'Drug Enforcement'
+  elif (('Kickback' in df_enforcement.loc[i, 'title']) | 
+  ('Bribe' in df_enforcement.loc[i, 'title']) | 
+  ('Embezzle' in df_enforcement.loc[i, 'title'])):
+    df_enforcement.loc[i, 'topic'] = 'Bribery/Corruption' 
+
+df_enforcement_topics = df_enforcement.groupby(by = ['yearmonth', 'topic']).count().reset_index()
+
+enforcement_by_topic = alt.Chart(df_enforcement_topics).mark_line().encode(
+  x = alt.X('yearmonth:T').title('Time'),
+  y = alt.Y('title:Q').title('Number of Actions'),
+  color = alt.Color('topic:N').title('Topic')
+).properties(
+  title = {
+    'text': 'Enforcement Over Time by Topic, January 2022-Present'
+  }
+)
+
+enforcement_by_topic.show()
 ```
